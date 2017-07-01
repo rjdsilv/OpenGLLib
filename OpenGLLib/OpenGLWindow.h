@@ -1,5 +1,6 @@
 #ifndef _OPENGL_WINDOW_H_
 #define _OPENGL_WINDOW_H_
+
 #pragma once
 
 #include <glad/glad.h>
@@ -11,6 +12,8 @@ using namespace std;
  * Class      : OpenGLWindow
  * Description: This class will be resposible for managing the game window using GLFW. It will be responsible
  *              for creating, destroying and managing the possible window events.
+ * Author     : Rodrigo Januario da Silva
+ * Version    : 1.0.0
  */
 class OpenGLWindow {
 private:
