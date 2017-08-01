@@ -14,12 +14,10 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
  * Param      : width  - The window with
  * Param      : height - The window height
  */
-OpenGLWindow::OpenGLWindow(const GLint majorVersion, const GLint minorVersion, const GLuint width, const GLuint height, const char* title) {
-	const unsigned int TITLE_LEN = strlen(title);
+OpenGLWindow::OpenGLWindow(const GLint majorVersion, const GLint minorVersion, const GLuint width, const GLuint height, const GLchar* title) {
 	this->width = width;
 	this->height = height;
-	this->title = new char[TITLE_LEN];
-	strcpy_s(this->title, sizeof(char) * TITLE_LEN, title);
+	this->title = title;
 
 	// Initializing GLFW
 	glfwInit();
@@ -28,12 +26,12 @@ OpenGLWindow::OpenGLWindow(const GLint majorVersion, const GLint minorVersion, c
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Creates the OpenGL Window.
-	window = glfwCreateWindow(800, 600, "LearnOpenGL", nullptr, nullptr);
-	if (nullptr == window) {
+	this->window = glfwCreateWindow(this->width, this->height, this->title, nullptr, nullptr);
+	if (nullptr == this->window) {	
 		terminate(OPENGL_ERR_CREATE_WINDOW, "Failed to create GLFW window");
 	}
-	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+	glfwMakeContextCurrent(this->window);
+	glfwSetFramebufferSizeCallback(this->window, framebufferSizeCallback);
 
 	// Initializing GLAD.
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -42,16 +40,20 @@ OpenGLWindow::OpenGLWindow(const GLint majorVersion, const GLint minorVersion, c
 }
 
 OpenGLWindow::~OpenGLWindow() {	
-	delete[] this->title;
 	terminate(OPENGL_OK, "");
 }
 
 bool OpenGLWindow::shouldClose() {
 	if (nullptr != window) {
-		return glfwWindowShouldClose(window) == 0;
+		return glfwWindowShouldClose(window) != 0;
 	}
 
 	return true;
+}
+
+void OpenGLWindow::swapBuffersAndPoolEvents() {
+	glfwSwapBuffers(this->window);
+	glfwPollEvents();
 }
 
 void OpenGLWindow::terminate(GLint code, const char* message) {

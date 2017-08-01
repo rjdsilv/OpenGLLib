@@ -15,14 +15,19 @@ using namespace std;
 * Version    : 1.0.0
 */
 class OpenGLShader {
+public:
+	const GLint SHADER_INVALID_PROGRAM = 0;
+	const GLint SHADER_INVALID_UNIFORM = -1;
+
 protected:
-	GLuint program;
+	GLuint program = SHADER_INVALID_PROGRAM;
 
 private:
 	void validateParameter(const GLchar* shaderPath, const GLchar* parameterName);
-	const GLchar* readShader(const GLchar* shaderPath);
-	GLuint compileShader(const GLchar* code, GLenum type);
+	string readShader(const GLchar* shaderPath, stringstream& shaderStream);
+	GLuint compileShader(string& code, GLenum type);
 	void linkProgram(const GLchar* vertexShaderPath, const GLchar* fragmentShaderPath);
+	bool isProgramInvalid();
 
 public:
 	// Constructors.
@@ -30,6 +35,7 @@ public:
 
 	// Methods.
 	void use();
+	GLint getUniform(const GLchar* name);
 };
 
 #endif

@@ -18,7 +18,24 @@ OpenGLShader::OpenGLShader(const GLchar* vertexShaderPath, const GLchar* fragmen
 	linkProgram(vertexShaderPath, fragmentShaderPath);
 }
 
-const GLchar* OpenGLShader::readShader(const GLchar * shaderPath) {
+void OpenGLShader::use() {
+	if (!isProgramInvalid()) {
+		glUseProgram(this->program);
+	}
+	else {
+		throw logic_error("The Shader Program hasn't be created!");
+	}
+}
+
+GLint OpenGLShader::getUniform(const GLchar* name) {
+	if (!isProgramInvalid()) {
+		return glGetUniformLocation(this->program, name);
+	}
+
+	return SHADER_INVALID_UNIFORM;
+}
+
+string OpenGLShader::readShader(const GLchar * shaderPath, stringstream& shaderStream) {
 	ifstream shaderFile;
 
 	// Ensure ifstream can throw exceptions.
@@ -27,10 +44,12 @@ const GLchar* OpenGLShader::readShader(const GLchar * shaderPath) {
 	try {
 		// Read the stream buffer and return its string
 		shaderFile.open(shaderPath);
-		stringstream shaderStream;
+		shaderStream.str("");
+		shaderStream.clear();
 		shaderStream << shaderFile.rdbuf();	
 		shaderFile.close();
-		return shaderStream.str().c_str();
+		string shaderCode = shaderStream.str();
+		return shaderCode;
 	}
 	catch (ifstream::failure fail) {
 		cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ" << endl;
@@ -39,12 +58,13 @@ const GLchar* OpenGLShader::readShader(const GLchar * shaderPath) {
 	return "";
 }
 
-GLuint OpenGLShader::compileShader(const GLchar* code, GLenum type) {
+GLuint OpenGLShader::compileShader(string& code, GLenum type) {
 	const GLchar* shaderName = (type == GL_VERTEX_SHADER) ? "VERTEX" : "FRAGMENT";
+	const GLchar* shaderCode = code.c_str();
 	GLint success;
 	GLchar infoLog[512];
 	GLuint shader = glCreateShader(type);
-	glShaderSource(shader, 1, &code, nullptr);
+	glShaderSource(shader, 1, &shaderCode, nullptr);
 	glCompileShader(shader);
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 	if (!success) {
@@ -56,34 +76,26 @@ GLuint OpenGLShader::compileShader(const GLchar* code, GLenum type) {
 }
 
 void OpenGLShader::linkProgram(const GLchar* vertexShaderPath, const GLchar* fragmentShaderPath) {
+	stringstream shaderStream;
 	GLint success;
 	GLchar infoLog[512];
-	GLuint vertexShader = compileShader(readShader(vertexShaderPath), GL_VERTEX_SHADER);
-	GLuint fragmentShader = compileShader(readShader(fragmentShaderPath), GL_FRAGMENT_SHADER);
+	GLuint vertexShader = compileShader(readShader(vertexShaderPath, shaderStream), GL_VERTEX_SHADER);
+	GLuint fragmentShader = compileShader(readShader(fragmentShaderPath, shaderStream), GL_FRAGMENT_SHADER);
 
 	// Create and link the shader program
-	program = glCreateProgram();
-	glAttachShader(program, vertexShader);
-	glAttachShader(program, fragmentShader);
-	glLinkProgram(program);
-	glGetProgramiv(program, GL_LINK_STATUS, &success);
+	this->program = glCreateProgram();
+	glAttachShader(this->program, vertexShader);
+	glAttachShader(this->program, fragmentShader);
+	glLinkProgram(this->program);
+	glGetProgramiv(this->program, GL_LINK_STATUS, &success);
 	if (!success) {
-		glGetProgramInfoLog(program, 512, nullptr, infoLog);
+		glGetProgramInfoLog(this->program, 512, nullptr, infoLog);
 		cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << endl;
 	}
 
 	// Delete already used the shaders.
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
-}
-
-void OpenGLShader::use() {
-	if (0 != program) {
-		glUseProgram(program);
-	}
-	else {
-		throw logic_error("The Shader Program hasn't be created!");
-	}
 }
 
 void OpenGLShader::validateParameter(const GLchar* shaderPath, const GLchar* parameterName) {
@@ -94,4 +106,8 @@ void OpenGLShader::validateParameter(const GLchar* shaderPath, const GLchar* par
 	if (nullptr == shaderPath) {
 		throw invalid_argument(errorMsg);
 	}
+}
+
+bool OpenGLShader::isProgramInvalid() {
+	return SHADER_INVALID_PROGRAM == this->program;
 }
